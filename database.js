@@ -1,5 +1,9 @@
 const Database = require('better-sqlite3')
-const db = new Database('wandr.db')
+
+const dbPath = process.env.RAILWAY_VOLUME_MOUNT_PATH 
+  ? `${process.env.RAILWAY_VOLUME_MOUNT_PATH}/wandr.db`
+  : 'wandr.db'
+const db = new Database(dbPath)
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS routes (
