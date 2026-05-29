@@ -88,17 +88,43 @@ function enrichDeal(d) {
 }
 
 // ── AUTOMATISK DATAINSAMLING ──────────────────────────────────────────────
+// Namnkarta — kod till stadsnamn
+const STATIONSNAMN = {
+  'Cst': 'Stockholm',
+  'G':   'Göteborg',
+  'M':   'Malmö',
+  'Lu':  'Lund',
+  'U':   'Uppsala',
+  'Vå':  'Västerås',
+  'Ör':  'Örebro',
+  'Lp':  'Linköping',
+  'Nr':  'Norrköping',
+  'Söu': 'Sundsvall',
+  'Uå':  'Umeå',
+  'Åre': 'Åre',
+}
+
 const STRÄCKOR = [
-  { från: 'Cst', till: 'G' },
-  { från: 'Cst', till: 'M' },
-  { från: 'Cst', till: 'Lu' },
-  { från: 'Cst', till: 'Åre' },
-  { från: 'Cst', till: 'Nr' },
+  { från: 'Cst', till: 'G'   },
+  { från: 'Cst', till: 'M'   },
+  { från: 'Cst', till: 'Lu'  },
+  { från: 'Cst', till: 'U'   },
+  { från: 'Cst', till: 'Nr'  },
+  { från: 'Cst', till: 'Lp'  },
+  { från: 'Cst', till: 'Söu' },
+  { från: 'Cst', till: 'Uå'  },
   { från: 'G',   till: 'Cst' },
-  { från: 'G',   till: 'M' },
+  { från: 'G',   till: 'M'   },
+  { från: 'G',   till: 'Lp'  },
   { från: 'M',   till: 'Cst' },
-  { från: 'M',   till: 'G' },
+  { från: 'M',   till: 'G'   },
+  { från: 'M',   till: 'Lu'  },
   { från: 'Lu',  till: 'Cst' },
+  { från: 'Lu',  till: 'G'   },
+  { från: 'Nr',  till: 'Cst' },
+  { från: 'Lp',  till: 'Cst' },
+  { från: 'U',   till: 'Cst' },
+  { från: 'Uå',  till: 'Söu' },
 ]
 
 async function samlaData() {
@@ -110,9 +136,9 @@ async function samlaData() {
       const avgångar = await getTågAvgångar(s.från, s.till)
       avgångar.forEach(t => {
         savePrice({
-          from:    t.från,
+          from:    STATIONSNAMN[t.från] || t.från,
           airport: t.från,
-          dest:    t.till,
+          dest:    STATIONSNAMN[t.till] || t.till,
           type:    'train',
           price:   t.pris,
           stops:   0,
@@ -122,7 +148,6 @@ async function samlaData() {
         })
       })
       totalt += avgångar.length
-      // Vänta lite mellan varje anrop så vi inte överbelastar API:et
       await new Promise(r => setTimeout(r, 500))
     } catch(e) {
       console.error(`Fel för ${s.från}→${s.till}:`, e.message)
