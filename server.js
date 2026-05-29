@@ -87,6 +87,55 @@ function enrichDeal(d) {
   return { ...d, pctUnderMedian: pct, isSuper: pct >= 50 }
 }
 
+// ── AUTOMATISK DATAINSAMLING ──────────────────────────────────────────────
+const STRÄCKOR = [
+  { från: 'Cst', till: 'G' },
+  { från: 'Cst', till: 'M' },
+  { från: 'Cst', till: 'Lu' },
+  { från: 'Cst', till: 'Åre' },
+  { från: 'Cst', till: 'Nr' },
+  { från: 'G',   till: 'Cst' },
+  { från: 'G',   till: 'M' },
+  { från: 'M',   till: 'Cst' },
+  { från: 'M',   till: 'G' },
+  { från: 'Lu',  till: 'Cst' },
+]
+
+async function samlaData() {
+  console.log(`[${new Date().toLocaleTimeString('sv-SE')}] Hämtar avgångar för ${STRÄCKOR.length} sträckor...`)
+  let totalt = 0
+
+  for (const s of STRÄCKOR) {
+    try {
+      const avgångar = await getTågAvgångar(s.från, s.till)
+      avgångar.forEach(t => {
+        savePrice({
+          from:    t.från,
+          airport: t.från,
+          dest:    t.till,
+          type:    'train',
+          price:   t.pris,
+          stops:   0,
+          dep:     t.avgång,
+          dur:     '',
+          seats:   ''
+        })
+      })
+      totalt += avgångar.length
+      // Vänta lite mellan varje anrop så vi inte överbelastar API:et
+      await new Promise(r => setTimeout(r, 500))
+    } catch(e) {
+      console.error(`Fel för ${s.från}→${s.till}:`, e.message)
+    }
+  }
+
+  console.log(`[${new Date().toLocaleTimeString('sv-SE')}] Sparade ${totalt} avgångar`)
+}
+
+// Kör direkt vid uppstart, sedan var 30:e minut
+samlaData()
+setInterval(samlaData, 30 * 60 * 1000)
+
 // ── START ──────────────────────────────────────────────────────────────────
 
 app.listen(PORT, () => {
